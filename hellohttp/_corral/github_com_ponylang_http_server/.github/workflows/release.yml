@@ -1,0 +1,34 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - \d+.\d+.\d+
+
+jobs:
+  generate-documentation:
+    name: Generate documentation for release
+    runs-on: ubuntu-latest
+    container:
+      image: ponylang/shared-docker-ci-release-a-library:release
+    steps:
+      - uses: actions/checkout@v1
+      - name: Trigger release announcement
+        run: bash .ci-scripts/release/documentation.bash
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+  trigger-release-announcement:
+    name: Trigger release announcement
+    runs-on: ubuntu-latest
+    needs: [generate-documentation]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Trigger
+        uses: ponylang/release-bot-action@0.3.3
+        with:
+          step: trigger-release-announcement
+          git_user_name: "Ponylang Main Bot"
+          git_user_email: "ponylang.main@gmail.com"
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
